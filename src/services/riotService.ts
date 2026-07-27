@@ -167,10 +167,17 @@ export function getMockSampleLogText(lang: Language = 'ko'): string {
  * Falls back cleanly to generating initial player records with mock tier data or baseline silver.
  */
 export async function resolveRiotPlayers(parsedIds: ParsedRiotId[]): Promise<Player[]> {
+  const riotApiKey = import.meta.env.VITE_RIOT_API_KEY || '';
+
   try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (riotApiKey) {
+      headers['X-Riot-Token'] = riotApiKey;
+    }
+
     const response = await fetch('/api/v1/team-balance/resolve', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ players: parsedIds }),
     });
 
