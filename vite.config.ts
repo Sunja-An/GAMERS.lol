@@ -10,5 +10,24 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/riot-asia': {
+        target: 'https://asia.api.riotgames.com',
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/riot-asia/, ''),
+      },
+      '/riot-kr': {
+        target: 'https://kr.api.riotgames.com',
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/riot-kr/, ''),
+      },
+      '/riot-jp': {
+        target: 'https://jp1.api.riotgames.com',
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/riot-jp/, ''),
+      },
+    },
+  },
 })
 
