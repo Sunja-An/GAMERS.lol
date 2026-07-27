@@ -1,0 +1,56 @@
+name: Build & Sync to Personal Repo
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Test Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Verify TypeScript & Build Project
+        run: npm run build
+
+  sync:
+    name: Sync to Personal Repository for Vercel
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Full History
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PERSONAL_PAT || github.token }}
+
+      - name: Push to Personal Repository (Sunja-An/GAMERS.lol)
+        env:
+          PERSONAL_PAT: ${{ secrets.PERSONAL_PAT }}
+        run: |
+          if [ -n "$PERSONAL_PAT" ]; then
+            echo "Pushing to personal repository Sunja-An/GAMERS.lol..."
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git remote add personal "https://x-access-token:${PERSONAL_PAT}@github.com/Sunja-An/GAMERS.lol.git"
+            git push personal main --force
+          else
+            echo "::warning ::PERSONAL_PAT secret is missing. Please set PERSONAL_PAT in Repository Secrets to auto-sync to Sunja-An/GAMERS.lol."
+          fi
