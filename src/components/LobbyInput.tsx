@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import type { ParsedRiotId } from '@/types/balancer';
 import type { Language } from '@/types/i18n';
 import { parseLobbyLog } from '@/utils/logParser';
-import { getMockSampleLogText } from '@/services/riotService';
 import { t } from '@/utils/i18n';
 
 interface LobbyInputProps {
@@ -39,11 +38,6 @@ export const LobbyInput: React.FC<LobbyInputProps> = ({ lang, onResolvePlayers, 
     }
   }, [rawText, lang]);
 
-  const handleLoadSample = () => {
-    const sampleText = getMockSampleLogText(lang);
-    setRawText(sampleText);
-  };
-
   const handleManualAdd = () => {
     if (parsedIds.length >= 10) return;
     const nextNum = parsedIds.length + 1;
@@ -79,12 +73,6 @@ export const LobbyInput: React.FC<LobbyInputProps> = ({ lang, onResolvePlayers, 
       <div className="panel-header">
         <h2 className="panel-title">{i18n.input.title}</h2>
         <p className="panel-subtitle">{i18n.input.subtitle}</p>
-      </div>
-
-      <div className="quick-actions">
-        <button type="button" className="btn btn-secondary btn-sm" onClick={handleLoadSample}>
-          {i18n.input.quickDemo}
-        </button>
       </div>
 
       <form onSubmit={handleSubmit} className="input-form">

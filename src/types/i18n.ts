@@ -14,7 +14,6 @@ export interface Translations {
   input: {
     title: string;
     subtitle: string;
-    quickDemo: string;
     textareaPlaceholder: string;
     countValid: (count: number) => string;
     countInvalid: (count: number) => string;
