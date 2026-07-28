@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ParsedRiotId } from '@/types/balancer';
 import type { Language } from '@/types/i18n';
 import { parseLobbyLog } from '@/utils/logParser';
@@ -18,30 +18,25 @@ export const LobbyInput: React.FC<LobbyInputProps> = ({ lang, onResolvePlayers, 
 
   const i18n = t(lang);
 
-  const handleParseAndResolve = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    let targetIds = parsedIds;
-
-    if (rawText.trim()) {
-      const parsed = parseLobbyLog(rawText, lang);
-      targetIds = parsed;
-      setParsedIds(parsed);
+  // Automatically parse text into player chips as user types/pastes (NO Riot API calls here!)
+  useEffect(() => {
+    if (!rawText.trim()) {
+      setParsedIds([]);
+      setErrorMsg(null);
+      return;
     }
 
-    if (targetIds.length > 10) {
+    const parsed = parseLobbyLog(rawText, lang);
+    setParsedIds(parsed);
+
+    if (parsed.length > 10) {
       setErrorMsg(i18n.input.exceededError);
-      return;
+    } else if (parsed.length < 10) {
+      setErrorMsg(i18n.input.countInvalid(parsed.length));
+    } else {
+      setErrorMsg(null);
     }
-
-    if (targetIds.length < 10) {
-      setErrorMsg(i18n.input.countInvalid(targetIds.length));
-      return;
-    }
-
-    setErrorMsg(null);
-    onResolvePlayers(targetIds.slice(0, 10));
-  };
+  }, [rawText, lang]);
 
   const handleManualAdd = () => {
     if (parsedIds.length >= 10) return;
@@ -64,6 +59,20 @@ export const LobbyInput: React.FC<LobbyInputProps> = ({ lang, onResolvePlayers, 
     setRawText(updated.map((p) => `${p.gameName}#${p.tagLine}`).join('\n'));
   };
 
+  // Trigger Riot API Search & Step 2 Transition STRICTLY on button click
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (parsedIds.length !== 10) {
+      setErrorMsg(i18n.input.countInvalid(parsedIds.length));
+      return;
+    }
+
+    setErrorMsg(null);
+    // Call Riot API & transition to Step 2
+    onResolvePlayers(parsedIds.slice(0, 10));
+  };
+
   return (
     <div className="input-panel-container">
       <div className="panel-header">
@@ -71,7 +80,7 @@ export const LobbyInput: React.FC<LobbyInputProps> = ({ lang, onResolvePlayers, 
         <p className="panel-subtitle">{i18n.input.subtitle}</p>
       </div>
 
-      <form onSubmit={handleParseAndResolve} className="input-form">
+      <form onSubmit={handleSubmit} className="input-form">
         <div className="textarea-group">
           <textarea
             className="lobby-textarea"
@@ -80,61 +89,64 @@ export const LobbyInput: React.FC<LobbyInputProps> = ({ lang, onResolvePlayers, 
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
           />
+          <div className="textarea-footer">
+            <span className={`count-badge ${parsedIds.length === 10 ? 'valid' : ''}`}>
+              {i18n.input.countValid(parsedIds.length)}
+            </span>
+          </div>
         </div>
 
         {errorMsg && <div className="validation-banner">{errorMsg}</div>}
 
-        {parsedIds.length > 0 && (
-          <div className="parsed-list-section">
-            <div className="parsed-list-header">
-              <h3>{i18n.input.listTitle(parsedIds.length)}</h3>
-              {parsedIds.length < 10 && (
-                <button type="button" className="btn btn-sm btn-secondary" onClick={handleManualAdd}>
-                  {i18n.input.addPlayer}
-                </button>
-              )}
-            </div>
-
-            <div className="parsed-grid">
-              {parsedIds.map((item, idx) => (
-                <div key={idx} className="player-input-chip">
-                  <span className="chip-index">{idx + 1}</span>
-                  <input
-                    type="text"
-                    className="chip-input name-input"
-                    value={item.gameName}
-                    placeholder={i18n.input.namePlaceholder}
-                    onChange={(e) => handleItemChange(idx, e.target.value, item.tagLine)}
-                  />
-                  <span className="chip-hash">#</span>
-                  <input
-                    type="text"
-                    className="chip-input tag-input"
-                    value={item.tagLine}
-                    placeholder={i18n.input.tagPlaceholder}
-                    onChange={(e) => handleItemChange(idx, item.gameName, e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="chip-remove-btn"
-                    onClick={() => handleRemoveItem(idx)}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
+        <div className="parsed-list-section">
+          <div className="parsed-list-header">
+            <h3>{i18n.input.listTitle(parsedIds.length)}</h3>
+            {parsedIds.length < 10 && (
+              <button type="button" className="btn btn-sm btn-secondary" onClick={handleManualAdd}>
+                {i18n.input.addPlayer}
+              </button>
+            )}
           </div>
-        )}
+
+          <div className="parsed-grid">
+            {parsedIds.map((item, idx) => (
+              <div key={idx} className="player-input-chip">
+                <span className="chip-index">{idx + 1}</span>
+                <input
+                  type="text"
+                  className="chip-input name-input"
+                  value={item.gameName}
+                  placeholder={i18n.input.namePlaceholder}
+                  onChange={(e) => handleItemChange(idx, e.target.value, item.tagLine)}
+                />
+                <span className="chip-hash">#</span>
+                <input
+                  type="text"
+                  className="chip-input tag-input"
+                  value={item.tagLine}
+                  placeholder={i18n.input.tagPlaceholder}
+                  onChange={(e) => handleItemChange(idx, item.gameName, e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="chip-remove-btn"
+                  onClick={() => handleRemoveItem(idx)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div className="form-submit-bar">
           <AnimatedButton
             type="submit"
             variant="primary"
             size="lg"
-            disabled={isLoading || (!rawText.trim() && parsedIds.length === 0)}
+            disabled={parsedIds.length !== 10 || isLoading}
           >
-            {isLoading ? i18n.input.loading : i18n.input.parseBtn}
+            {isLoading ? i18n.input.loading : i18n.input.nextBtn}
           </AnimatedButton>
         </div>
       </form>
