@@ -113,20 +113,22 @@ export const PlayerConfig: React.FC<PlayerConfigProps> = ({
                       {player.summonerLevel && (
                         <span className="summoner-level">Lv.{player.summonerLevel}</span>
                       )}
-                      <TierBadge
-                        tier={player.tier}
-                        division={player.division}
-                        lp={player.leaguePoints}
-                        isUnranked={player.isUnranked}
-                      />
-                      <button
-                        type="button"
-                        className="edit-rank-btn"
-                        onClick={() => setEditingPlayerIndex(idx)}
-                        title={i18n.config.editRank}
-                      >
-                        <span className="material-symbols-outlined text-xs">edit</span>
-                      </button>
+                      <div className="tier-badge-group">
+                        <TierBadge
+                          tier={player.tier}
+                          division={player.division}
+                          lp={player.leaguePoints}
+                          isUnranked={player.isUnranked}
+                        />
+                        <button
+                          type="button"
+                          className="edit-rank-btn"
+                          onClick={() => setEditingPlayerIndex(idx)}
+                          title={i18n.config.editRank}
+                        >
+                          <span className="material-symbols-outlined text-xs">edit</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

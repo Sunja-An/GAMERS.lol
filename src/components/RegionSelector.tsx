@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Region } from '@/types/region';
 import { REGION_OPTIONS, getRegionOption } from '@/types/region';
+import { FlagIcon } from './FlagIcon';
 
 interface RegionSelectorProps {
   currentRegion: Region;
@@ -38,7 +39,9 @@ export const RegionSelector: React.FC<RegionSelectorProps> = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className="region-flag">{activeOption.flag}</span>
+        <span className="region-flag">
+          <FlagIcon code={activeOption.id} size="1.2em" />
+        </span>
         <span className="region-name">{activeOption.name}</span>
         <span className="material-symbols-outlined dropdown-arrow">
           {isOpen ? 'expand_less' : 'expand_more'}
@@ -61,7 +64,9 @@ export const RegionSelector: React.FC<RegionSelectorProps> = ({
                 role="option"
                 aria-selected={option.id === currentRegion}
               >
-                <span className="option-flag">{option.flag}</span>
+                <span className="option-flag">
+                  <FlagIcon code={option.id} size="1.2em" />
+                </span>
                 <div className="option-text-group">
                   <span className="option-name">{option.name}</span>
                   <span className="option-fullname">{option.fullName}</span>

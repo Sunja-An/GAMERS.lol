@@ -42,6 +42,11 @@ export interface Translations {
     loading: string;
     namePlaceholder: string;
     tagPlaceholder: string;
+    verifyingText: (regionName: string) => string;
+    verifiedStatus: (count: number, total: number, regionName: string) => string;
+    verifiedBadge: string;
+    unverifiedBadge: string;
+    autoTagBtn: (tag: string) => string;
   };
   config: {
     title: string;

@@ -238,41 +238,53 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ lang, assignment }) => {
     }
   };
 
-
-
   return (
-    <div className="player-row">
-      <div className="lane-badge-wrap">
-        <span className="lane-name">{lane}</span>
+    <div className="player-row player-row-card">
+      {/* Top Row: Lane + Avatar + Full Name & Tag */}
+      <div className="player-row-top">
+        <div className="player-row-identity">
+          <div className="lane-badge-wrap">
+            <span className="lane-name">{lane}</span>
+          </div>
+          <div className="player-avatar-mini-wrap">
+            <img
+              src={player.profileIconUrl || `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${player.profileIconId || 1}.png`}
+              alt={player.gameName}
+              className="avatar-img-mini"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://ddragon.leagueoflegends.com/cdn/15.2.1/img/profileicon/1.png';
+              }}
+            />
+          </div>
+          <div className="player-name-full">
+            <span className="name" title={`${player.gameName}#${player.tagLine}`}>
+              {player.gameName}
+            </span>
+            <span className="tag">#{player.tagLine}</span>
+          </div>
+        </div>
       </div>
 
-      <div className="player-name-info">
-        <img
-          src={player.profileIconUrl || `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${player.profileIconId || 1}.png`}
-          alt={player.gameName}
-          className="avatar-img-mini"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://ddragon.leagueoflegends.com/cdn/15.2.1/img/profileicon/1.png';
-          }}
-        />
-        <span className="name" title={`${player.gameName}#${player.tagLine}`}>
-          {player.gameName}
-        </span>
-        <span className="tag">#{player.tagLine}</span>
-      </div>
-
-      <div className="player-right-info">
-        {player.summonerLevel && (
-          <span className="summoner-level">Lv.{player.summonerLevel}</span>
-        )}
-        {getPrefBadge()}
-        <TierBadge
-          tier={player.tier}
-          division={player.division}
-          lp={player.leaguePoints}
-          isUnranked={player.isUnranked}
-        />
-        <span className="ps-mini">{player.powerScore}</span>
+      {/* Bottom Row: Level, Pref Tag, Rank Badge, PowerScore */}
+      <div className="player-row-bottom">
+        <div className="player-stats-left">
+          {player.summonerLevel && (
+            <span className="summoner-level">Lv.{player.summonerLevel}</span>
+          )}
+          {getPrefBadge()}
+        </div>
+        <div className="player-stats-right">
+          <TierBadge
+            tier={player.tier}
+            division={player.division}
+            lp={player.leaguePoints}
+            isUnranked={player.isUnranked}
+          />
+          <div className="powerscore-mini-chip" title="PowerScore">
+            <span className="ps-label-mini">PS</span>
+            <span className="ps-value-mini">{player.powerScore}</span>
+          </div>
+        </div>
       </div>
     </div>
   );

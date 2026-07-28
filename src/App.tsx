@@ -22,6 +22,12 @@ export const App: React.FC = () => {
     setRegion,
     step,
     setStep,
+    rawText,
+    setRawText,
+    parsedIds,
+    setParsedIds,
+    verificationCache,
+    setVerificationCache,
     players,
     setPlayers,
     candidates,
@@ -45,6 +51,28 @@ export const App: React.FC = () => {
     try {
       const resolved = await resolveRiotPlayers(parsedIds, region);
       setPlayers(resolved);
+
+      // Seed verified status into verificationCache
+      setVerificationCache((prev) => {
+        const updated = { ...prev };
+        resolved.forEach((p) => {
+          const name = p.gameName.trim().toLowerCase();
+          const tag = p.tagLine.trim().toLowerCase();
+          const key = `${name}#${tag}@${region}`;
+          updated[key] = {
+            id: `${p.gameName}#${p.tagLine}`,
+            gameName: p.gameName,
+            tagLine: p.tagLine,
+            status: 'verified',
+            region,
+            puuid: p.puuid,
+            summonerLevel: p.summonerLevel,
+            profileIconId: p.profileIconId,
+          };
+        });
+        return updated;
+      });
+
       setStep('config');
     } catch (e) {
       console.error('Error resolving players:', e);
@@ -111,6 +139,12 @@ export const App: React.FC = () => {
                 onRegionChange={setRegion}
                 onResolvePlayers={handleResolvePlayers}
                 isLoading={isLoading}
+                rawText={rawText}
+                setRawText={setRawText}
+                parsedIds={parsedIds}
+                setParsedIds={setParsedIds}
+                verificationCache={verificationCache}
+                setVerificationCache={setVerificationCache}
               />
             )}
 

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Player, Candidate } from '@/types/balancer';
+import type { Player, Candidate, ParsedRiotId } from '@/types/balancer';
 import type { Language } from '@/types/i18n';
 import type { Region } from '@/types/region';
+import type { VerifiedUserResult } from '@/types/verification';
 
 const STORAGE_KEY = 'gamers_lol_balancer_state_v1';
 
@@ -9,6 +10,9 @@ interface SavedState {
   lang: Language;
   region?: Region;
   step: 'input' | 'config' | 'result';
+  rawText?: string;
+  parsedIds?: ParsedRiotId[];
+  verificationCache?: Record<string, VerifiedUserResult>;
   players: Player[];
   candidates: Candidate[];
   shownIndices: number[];
@@ -54,6 +58,23 @@ function getInitialLanguage(): Language {
 }
 
 /**
+ * Reads initial region synchronously from sessionStorage
+ */
+function getInitialRegion(): Region {
+  if (typeof window === 'undefined') return 'kr';
+  try {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed: SavedState = JSON.parse(saved);
+      if (parsed.region) return parsed.region;
+    }
+  } catch (e) {
+    console.warn('Failed to parse region from sessionStorage:', e);
+  }
+  return 'kr';
+}
+
+/**
  * Updates URL Path without page reload (e.g. /ko or /ja)
  */
 function updateUrlPathLang(lang: Language) {
@@ -74,8 +95,11 @@ function updateUrlPathLang(lang: Language) {
 
 export function useBalancerState() {
   const [lang, setLangState] = useState<Language>(() => getInitialLanguage());
-  const [region, setRegion] = useState<Region>('kr');
+  const [region, setRegion] = useState<Region>(() => getInitialRegion());
   const [step, setStep] = useState<'input' | 'config' | 'result'>('input');
+  const [rawText, setRawText] = useState<string>('');
+  const [parsedIds, setParsedIds] = useState<ParsedRiotId[]>([]);
+  const [verificationCache, setVerificationCache] = useState<Record<string, VerifiedUserResult>>({});
   const [players, setPlayers] = useState<Player[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [shownIndices, setShownIndices] = useState<Set<number>>(new Set());
@@ -108,17 +132,73 @@ export function useBalancerState() {
 
       if (saved) {
         const parsed: SavedState = JSON.parse(saved);
-        if (parsed.region) {
+        const activeRegion = parsed.region || region;
+        if (parsed.region && parsed.region !== region) {
           setRegion(parsed.region);
         }
-        if (parsed.players && parsed.players.length === 10) {
-          setStep(parsed.step);
-          setPlayers(parsed.players);
-          setCandidates(parsed.candidates || []);
-          setShownIndices(new Set(parsed.shownIndices || []));
-          if (parsed.candidates && parsed.currentCandidateIndex >= 0) {
-            setCurrentCandidate(parsed.candidates[parsed.currentCandidateIndex] || null);
+
+        let loadedPlayers: Player[] = [];
+        if (parsed.players && Array.isArray(parsed.players)) {
+          loadedPlayers = parsed.players;
+          setPlayers(loadedPlayers);
+        }
+
+        let loadedParsedIds: ParsedRiotId[] = [];
+        if (parsed.parsedIds && Array.isArray(parsed.parsedIds) && parsed.parsedIds.length > 0) {
+          loadedParsedIds = parsed.parsedIds;
+          setParsedIds(loadedParsedIds);
+        } else if (loadedPlayers.length > 0) {
+          loadedParsedIds = loadedPlayers.map((p) => ({
+            gameName: p.gameName,
+            tagLine: p.tagLine,
+          }));
+          setParsedIds(loadedParsedIds);
+        }
+
+        if (parsed.rawText !== undefined && parsed.rawText !== null && parsed.rawText.trim() !== '') {
+          setRawText(parsed.rawText);
+        } else if (loadedParsedIds.length > 0) {
+          setRawText(loadedParsedIds.map((p) => `${p.gameName}#${p.tagLine}`).join('\n'));
+        }
+
+        const restoredCache: Record<string, VerifiedUserResult> = parsed.verificationCache || {};
+        if (loadedPlayers.length > 0) {
+          loadedPlayers.forEach((p) => {
+            const name = p.gameName.trim().toLowerCase();
+            const tag = (p.tagLine.trim() || 'KR1').toLowerCase();
+            const key = `${name}#${tag}@${activeRegion}`;
+            if (!restoredCache[key]) {
+              restoredCache[key] = {
+                id: `${p.gameName}#${p.tagLine}`,
+                gameName: p.gameName,
+                tagLine: p.tagLine,
+                status: 'verified',
+                region: activeRegion,
+                puuid: p.puuid,
+                summonerLevel: p.summonerLevel,
+                profileIconId: p.profileIconId,
+              };
+            }
+          });
+        }
+        setVerificationCache(restoredCache);
+
+        if (parsed.step) {
+          if ((parsed.step === 'config' || parsed.step === 'result') && loadedPlayers.length === 10) {
+            setStep(parsed.step);
+          } else {
+            setStep('input');
           }
+        }
+
+        if (parsed.candidates) {
+          setCandidates(parsed.candidates);
+        }
+        if (parsed.shownIndices) {
+          setShownIndices(new Set(parsed.shownIndices));
+        }
+        if (parsed.candidates && parsed.currentCandidateIndex >= 0) {
+          setCurrentCandidate(parsed.candidates[parsed.currentCandidateIndex] || null);
         }
       }
     } catch (e) {
@@ -152,6 +232,9 @@ export function useBalancerState() {
         lang,
         region,
         step,
+        rawText,
+        parsedIds,
+        verificationCache,
         players,
         candidates,
         shownIndices: Array.from(shownIndices),
@@ -161,10 +244,13 @@ export function useBalancerState() {
     } catch (e) {
       console.warn('Failed to save to sessionStorage:', e);
     }
-  }, [lang, region, step, players, candidates, shownIndices, currentCandidate]);
+  }, [lang, region, step, rawText, parsedIds, verificationCache, players, candidates, shownIndices, currentCandidate]);
 
   const resetAll = () => {
     setStep('input');
+    setRawText('');
+    setParsedIds([]);
+    setVerificationCache({});
     setPlayers([]);
     setCandidates([]);
     setShownIndices(new Set());
@@ -179,6 +265,12 @@ export function useBalancerState() {
     setRegion,
     step,
     setStep,
+    rawText,
+    setRawText,
+    parsedIds,
+    setParsedIds,
+    verificationCache,
+    setVerificationCache,
     players,
     setPlayers,
     candidates,
@@ -190,3 +282,5 @@ export function useBalancerState() {
     resetAll,
   };
 }
+
+

@@ -45,6 +45,11 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       loading: '소환사 데이터 조회 중...',
       namePlaceholder: '닉네임',
       tagPlaceholder: '태그',
+      verifyingText: (regionName) => `${regionName} 서버 소환사 존재 여부 검증 중...`,
+      verifiedStatus: (count, total, regionName) => `${regionName} 서버 ${total}명 중 ${count}명 존재 검증 완료`,
+      verifiedBadge: '서버 존재 확인됨',
+      unverifiedBadge: '태그 확인 필요',
+      autoTagBtn: (tag) => `#${tag} 자동입력`,
     },
     config: {
       title: '소환사 라인 선호도 & 티어 설정',
@@ -148,6 +153,11 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       loading: '召喚士データ照会中...',
       namePlaceholder: 'サモナー名',
       tagPlaceholder: 'タグ',
+      verifyingText: (regionName) => `${regionName} サーバーの召喚士存在確認中...`,
+      verifiedStatus: (count, total, regionName) => `${regionName} サーバー ${total}名中 ${count}名 存在確認完了`,
+      verifiedBadge: 'サーバー存在確認済み',
+      unverifiedBadge: 'タグ確認必要',
+      autoTagBtn: (tag) => `#${tag} 自動入力`,
     },
     config: {
       title: '召喚士レーン希望 & ランク設定',

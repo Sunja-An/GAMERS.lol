@@ -4,6 +4,7 @@ import { useGSAP } from '@gsap/react';
 import type { Language } from '@/types/i18n';
 import { t } from '@/utils/i18n';
 import { ResetButton } from './ResetButton';
+import { FlagIcon } from './FlagIcon';
 
 gsap.registerPlugin(useGSAP);
 
@@ -78,14 +79,14 @@ export const Header: React.FC<HeaderProps> = ({
               className={`lang-btn ${lang === 'ko' ? 'active' : ''}`}
               onClick={() => onLanguageChange('ko')}
             >
-              🇰🇷 KR
+              <FlagIcon code="kr" size="1.15em" /> KR
             </button>
             <button
               type="button"
               className={`lang-btn ${lang === 'ja' ? 'active' : ''}`}
               onClick={() => onLanguageChange('ja')}
             >
-              🇯🇵 JP
+              <FlagIcon code="jp" size="1.15em" /> JP
             </button>
           </div>
 
