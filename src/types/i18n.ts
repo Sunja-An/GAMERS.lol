@@ -15,6 +15,7 @@ export interface Translations {
     title: string;
     subtitle: string;
     textareaPlaceholder: string;
+    parseBtn: string;
     countValid: (count: number) => string;
     countInvalid: (count: number) => string;
     exceededError: string;

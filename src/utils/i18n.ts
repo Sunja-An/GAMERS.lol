@@ -17,6 +17,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       subtitle:
         '리그 오브 레전드 대기열 채팅(OOO님이 들어왔습니다.) 또는 이름#태그 목록을 붙여넣으세요.',
       textareaPlaceholder: `예시:\nHide on bush#KR1님이 들어왔습니다.\nCanyon#KR1님이 들어왔습니다.\nZeus#KR1\nViper#KR1\n...`,
+      parseBtn: '🔍 소환사 파싱 및 Riot API 데이터 조회 ➔',
       countValid: (count) => `인식된 소환사: ${count} / 10명`,
       countInvalid: (count) => `현재 ${count}명 인식됨 (정확히 10명이 필요합니다)`,
       exceededError: '소환사가 10명을 초과했습니다. 처음 10명만 사용됩니다.',
@@ -94,6 +95,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
       subtitle:
         'LoLロビーチャット（OOOが参加しました。）または 名前#タグ のリストを貼り付けてください。',
       textareaPlaceholder: `例:\nHide on bush#KR1が参加しました。\nCanyon#KR1が参加しました。\nZeus#KR1\nViper#KR1\n...`,
+      parseBtn: '🔍 召喚士解析 & Riot API データ照会 ➔',
       countValid: (count) => `認識された召喚士: ${count} / 10名`,
       countInvalid: (count) => `現在 ${count}名 認識 (正確に10名必要です)`,
       exceededError: '召喚士が10名を超えています。最初の10名のみ使用されます。',
