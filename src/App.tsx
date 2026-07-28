@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { useBalancerState } from '@/hooks/useBalancerState';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { StepIndicator } from '@/components/StepIndicator';
-import { LobbyInput } from '@/components/LobbyInput';
-import { PlayerConfig } from '@/components/PlayerConfig';
-import { TeamResult } from '@/components/TeamResult';
 import { resolveRiotPlayers } from '@/services/riotService';
 import { generateTopKTeams, pickNextCandidate } from '@/utils/balancer';
 import type { ParsedRiotId } from '@/types/balancer';
 import './App.css';
+
+// Code splitting: lazy load heavy step components
+const LobbyInput = lazy(() => import('@/components/LobbyInput').then(m => ({ default: m.LobbyInput })));
+const PlayerConfig = lazy(() => import('@/components/PlayerConfig').then(m => ({ default: m.PlayerConfig })));
+const TeamResult = lazy(() => import('@/components/TeamResult').then(m => ({ default: m.TeamResult })));
 
 export const App: React.FC = () => {
   const {
@@ -29,6 +32,9 @@ export const App: React.FC = () => {
     setCurrentCandidate,
     resetAll,
   } = useBalancerState();
+
+  // Dynamically update SEO meta tags on lang change
+  useSeoMeta(lang);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [wasRecomputed, setWasRecomputed] = useState<boolean>(false);
@@ -97,37 +103,39 @@ export const App: React.FC = () => {
         />
 
         <div className="content-view-wrap">
-          {step === 'input' && (
-            <LobbyInput
-              lang={lang}
-              region={region}
-              onRegionChange={setRegion}
-              onResolvePlayers={handleResolvePlayers}
-              isLoading={isLoading}
-            />
-          )}
+          <Suspense fallback={<div className="step-loading-fallback" />}>
+            {step === 'input' && (
+              <LobbyInput
+                lang={lang}
+                region={region}
+                onRegionChange={setRegion}
+                onResolvePlayers={handleResolvePlayers}
+                isLoading={isLoading}
+              />
+            )}
 
-          {step === 'config' && (
-            <PlayerConfig
-              lang={lang}
-              players={players}
-              onUpdatePlayers={setPlayers}
-              onGenerateTeams={handleGenerateTeams}
-              onBack={() => setStep('input')}
-            />
-          )}
+            {step === 'config' && (
+              <PlayerConfig
+                lang={lang}
+                players={players}
+                onUpdatePlayers={setPlayers}
+                onGenerateTeams={handleGenerateTeams}
+                onBack={() => setStep('input')}
+              />
+            )}
 
-          {step === 'result' && (
-            <TeamResult
-              lang={lang}
-              currentCandidate={currentCandidate}
-              totalCandidatesCount={candidates.length}
-              shownCandidatesCount={shownIndices.size}
-              onRebalance={handleRebalance}
-              onBackToConfig={() => setStep('config')}
-              wasRecomputed={wasRecomputed}
-            />
-          )}
+            {step === 'result' && (
+              <TeamResult
+                lang={lang}
+                currentCandidate={currentCandidate}
+                totalCandidatesCount={candidates.length}
+                shownCandidatesCount={shownIndices.size}
+                onRebalance={handleRebalance}
+                onBackToConfig={() => setStep('config')}
+                wasRecomputed={wasRecomputed}
+              />
+            )}
+          </Suspense>
         </div>
       </main>
 

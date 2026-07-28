@@ -36,61 +36,129 @@ export function getPreferencePenalty(
 }
 
 /**
- * Generates all 5! = 120 permutations of lanes
+ * Hungarian Algorithm (Kuhn-Munkres) for minimum-cost bipartite perfect matching.
+ *
+ * Solves: given an n×n cost matrix, find the assignment of rows to columns
+ * that minimizes total cost. O(n³) — as specified in GAMERS.lol.md §6.2.
+ *
+ * Implementation: Jonker-Volgenant style with potential (dual variable) approach.
+ * For n=5 this is ~125 inner operations — effectively constant time.
+ *
+ * @param costMatrix - n×n matrix where costMatrix[i][j] = cost of assigning row i to col j
+ * @returns assignment array where assignment[i] = column assigned to row i
  */
+function hungarianAlgorithm(costMatrix: number[][]): number[] {
+  const n = costMatrix.length;
 
-function generatePermutations<T>(arr: T[]): T[][] {
-  if (arr.length <= 1) return [arr];
-  const result: T[][] = [];
-  for (let i = 0; i < arr.length; i++) {
-    const current = arr[i];
-    const remaining = [...arr.slice(0, i), ...arr.slice(i + 1)];
-    const perms = generatePermutations(remaining);
-    for (const p of perms) {
-      result.push([current, ...p]);
+  // u[i] = dual potential for row i (1-indexed, u[0] unused)
+  // v[j] = dual potential for col j (1-indexed, v[0] = unmatched sentinel)
+  const u = new Array(n + 1).fill(0);
+  const v = new Array(n + 1).fill(0);
+
+  // p[j] = which row is matched to column j (1-indexed; p[0] = unmatched col sentinel)
+  const p = new Array(n + 1).fill(0);
+
+  // way[j] = which column j was reached from (for path reconstruction)
+  const way = new Array(n + 1).fill(0);
+
+  for (let i = 1; i <= n; i++) {
+    // Augmenting path for row i
+    p[0] = i;
+    let j0 = 0; // start from sentinel column 0
+
+    // minDist[j] = min reduced cost to reach column j from current row
+    const minDist = new Array(n + 1).fill(Infinity);
+    const used = new Array(n + 1).fill(false);
+
+    do {
+      used[j0] = true;
+      const i0 = p[j0];
+      let delta = Infinity;
+      let j1 = -1;
+
+      for (let j = 1; j <= n; j++) {
+        if (!used[j]) {
+          // Reduced cost: costMatrix is 0-indexed, potentials are 1-indexed
+          const reducedCost = costMatrix[i0 - 1][j - 1] - u[i0] - v[j];
+          if (reducedCost < minDist[j]) {
+            minDist[j] = reducedCost;
+            way[j] = j0;
+          }
+          if (minDist[j] < delta) {
+            delta = minDist[j];
+            j1 = j;
+          }
+        }
+      }
+
+      // Update potentials
+      for (let j = 0; j <= n; j++) {
+        if (used[j]) {
+          u[p[j]] += delta;
+          v[j] -= delta;
+        } else {
+          minDist[j] -= delta;
+        }
+      }
+
+      j0 = j1!;
+    } while (p[j0] !== 0); // until we reach an unmatched column
+
+    // Augment along the path
+    do {
+      p[j0] = p[way[j0]];
+      j0 = way[j0];
+    } while (j0 !== 0);
+  }
+
+  // Build result: assignment[row] = col (both 0-indexed)
+  const assignment = new Array(n).fill(0);
+  for (let j = 1; j <= n; j++) {
+    if (p[j] !== 0) {
+      assignment[p[j] - 1] = j - 1;
     }
   }
-  return result;
-}
 
-const LANE_PERMUTATIONS = generatePermutations(LANES);
+  return assignment;
+}
 
 /**
  * Finds the optimal lane assignment for a 5-player team minimizing preference penalty.
+ * Uses the Hungarian Algorithm (Kuhn-Munkres) — O(n³) — as specified in §6.2.
+ * Replaces the previous brute-force 5! = 120 permutation search.
  */
 export function bestLaneAssignment(team: Player[]): {
   assignments: PlayerLaneAssignment[];
   penalty: number;
 } {
-  let bestAssignments: PlayerLaneAssignment[] | null = null;
-  let minPenalty = Infinity;
+  const n = team.length; // expected to be 5
 
-  for (const perm of LANE_PERMUTATIONS) {
-    let currentPenalty = 0;
-    const currentAssignments: PlayerLaneAssignment[] = [];
+  // Build n×n cost matrix: costMatrix[i][j] = penalty of assigning team[i] to LANES[j]
+  const costMatrix: number[][] = Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) => getPreferencePenalty(team[i], LANES[j] as Lane).penalty)
+  );
 
-    for (let i = 0; i < 5; i++) {
-      const player = team[i];
-      const lane = perm[i];
-      const { penalty, status } = getPreferencePenalty(player, lane);
+  // Run Hungarian Algorithm to get optimal assignment
+  const laneIndices = hungarianAlgorithm(costMatrix);
 
-      currentPenalty += penalty;
-      currentAssignments.push({
-        player,
-        lane,
-        preferenceStatus: status,
-      });
-    }
+  // Build result assignments and compute total penalty
+  let totalPenalty = 0;
+  const assignments: PlayerLaneAssignment[] = [];
 
-    if (currentPenalty < minPenalty) {
-      minPenalty = currentPenalty;
-      bestAssignments = currentAssignments;
-    }
+  for (let i = 0; i < n; i++) {
+    const lane = LANES[laneIndices[i]] as Lane;
+    const { penalty, status } = getPreferencePenalty(team[i], lane);
+    totalPenalty += penalty;
+    assignments.push({
+      player: team[i],
+      lane,
+      preferenceStatus: status,
+    });
   }
 
   return {
-    assignments: bestAssignments ?? [],
-    penalty: minPenalty,
+    assignments,
+    penalty: totalPenalty,
   };
 }
 
