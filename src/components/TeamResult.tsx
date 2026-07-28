@@ -5,6 +5,7 @@ import { TierBadge } from './TierBadge';
 import { formatTeamSummaryText } from '@/utils/clipboard';
 import { LANES } from '@/utils/balancer';
 import { t } from '@/utils/i18n';
+import { AnimatedButton } from './AnimatedButton';
 
 interface TeamResultProps {
   lang: Language;
@@ -33,9 +34,9 @@ export const TeamResult: React.FC<TeamResultProps> = ({
     return (
       <div className="panel-container text-center">
         <h2>No calculated team data.</h2>
-        <button className="btn btn-primary" onClick={onBackToConfig}>
+        <AnimatedButton variant="primary" onClick={onBackToConfig}>
           ← {i18n.config.backBtn}
-        </button>
+        </AnimatedButton>
       </div>
     );
   }
@@ -82,15 +83,15 @@ export const TeamResult: React.FC<TeamResultProps> = ({
             </button>
           </div>
 
-          <button className="btn btn-secondary btn-sm" onClick={onBackToConfig}>
+          <AnimatedButton variant="secondary" size="sm" onClick={onBackToConfig}>
             {i18n.result.backToConfig}
-          </button>
-          <button className="btn btn-secondary btn-sm" onClick={handleCopyClipboard}>
+          </AnimatedButton>
+          <AnimatedButton variant="secondary" size="sm" onClick={handleCopyClipboard}>
             {copySuccess ? i18n.result.copied : i18n.result.copyResult}
-          </button>
-          <button className="btn btn-primary btn-md reroll-btn" onClick={onRebalance}>
+          </AnimatedButton>
+          <AnimatedButton variant="reroll" size="md" onClick={onRebalance}>
             {i18n.result.reroll}
-          </button>
+          </AnimatedButton>
         </div>
       </div>
 

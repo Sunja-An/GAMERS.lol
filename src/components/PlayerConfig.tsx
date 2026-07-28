@@ -5,6 +5,7 @@ import { TierBadge } from './TierBadge';
 import { LANES } from '@/utils/balancer';
 import { TIER_ORDER, DIVISION_OFFSET, calculatePowerScore } from '@/utils/powerScore';
 import { t } from '@/utils/i18n';
+import { AnimatedButton } from './AnimatedButton';
 
 interface PlayerConfigProps {
   lang: Language;
@@ -73,9 +74,9 @@ export const PlayerConfig: React.FC<PlayerConfigProps> = ({
           <h2 className="panel-title">{i18n.config.title}</h2>
           <p className="panel-subtitle">{i18n.config.subtitle}</p>
         </div>
-        <button className="btn btn-secondary btn-sm" onClick={onBack}>
+        <AnimatedButton variant="secondary" size="sm" onClick={onBack}>
           {i18n.config.backBtn}
-        </button>
+        </AnimatedButton>
       </div>
 
       <div className="player-cards-grid">
@@ -169,9 +170,9 @@ export const PlayerConfig: React.FC<PlayerConfigProps> = ({
       </div>
 
       <div className="form-submit-bar sticky-bar">
-        <button type="button" className="btn btn-primary btn-lg" onClick={onGenerateTeams}>
+        <AnimatedButton variant="primary" size="lg" onClick={onGenerateTeams}>
           {i18n.config.startMatching}
-        </button>
+        </AnimatedButton>
       </div>
 
       {/* Rank Edit Modal */}
@@ -249,12 +250,12 @@ const RankEditModal: React.FC<RankEditModalProps> = ({ lang, player, onSave, onC
           )}
 
           <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
+            <AnimatedButton type="button" variant="secondary" onClick={onClose}>
               {i18n.modal.cancel}
-            </button>
-            <button type="submit" className="btn btn-primary">
+            </AnimatedButton>
+            <AnimatedButton type="submit" variant="primary">
               {i18n.modal.save}
-            </button>
+            </AnimatedButton>
           </div>
         </form>
       </div>

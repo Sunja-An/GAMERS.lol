@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Language } from '@/types/i18n';
 import { t } from '@/utils/i18n';
+import { AnimatedButton } from './AnimatedButton';
 
 interface HeaderProps {
   lang: Language;
@@ -41,9 +42,9 @@ export const Header: React.FC<HeaderProps> = ({ lang, onLanguageChange, onReset 
             </button>
           </div>
 
-          <button className="btn btn-secondary btn-sm" onClick={onReset}>
+          <AnimatedButton variant="secondary" size="sm" onClick={onReset}>
             {i18n.header.reset}
-          </button>
+          </AnimatedButton>
         </div>
       </div>
     </header>

@@ -152,7 +152,96 @@
   background: var(--border-color);
 }
 
-/* General Buttons */
+/* General Buttons & GSAP Animated Button Styles (GSAP UI Showcase Style) */
+.gsap-animated-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  outline: none;
+  user-select: none;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.gsap-animated-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.gsap-btn-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: overlay;
+}
+
+.gsap-btn-content {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Button Variants */
+.gsap-btn-primary {
+  background: linear-gradient(135deg, #c8aa6e 0%, #a17f3d 100%);
+  color: #090d16;
+  border: 1px solid rgba(250, 240, 210, 0.5);
+  box-shadow: 0 4px 16px rgba(200, 170, 110, 0.3);
+}
+
+.gsap-btn-secondary {
+  background: rgba(30, 41, 59, 0.7);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+}
+
+.gsap-btn-reroll {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  border: 1px solid rgba(165, 180, 252, 0.5);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+
+.gsap-btn-warning {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Sizes */
+.gsap-btn-sm {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+.gsap-btn-md {
+  padding: 0.65rem 1.35rem;
+  font-size: 0.95rem;
+}
+
+.gsap-btn-lg {
+  padding: 0.85rem 2.2rem;
+  font-size: 1.1rem;
+}
+
 .btn {
   padding: 0.6rem 1.2rem;
   border-radius: 10px;

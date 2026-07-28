@@ -3,6 +3,7 @@ import type { ParsedRiotId } from '@/types/balancer';
 import type { Language } from '@/types/i18n';
 import { parseLobbyLog } from '@/utils/logParser';
 import { t } from '@/utils/i18n';
+import { AnimatedButton } from './AnimatedButton';
 
 interface LobbyInputProps {
   lang: Language;
@@ -17,13 +18,11 @@ export const LobbyInput: React.FC<LobbyInputProps> = ({ lang, onResolvePlayers, 
 
   const i18n = t(lang);
 
-  // Manual parse and Riot API fetch trigger on button click
   const handleParseAndResolve = (e: React.FormEvent) => {
     e.preventDefault();
 
     let targetIds = parsedIds;
 
-    // If rawText is provided, parse it on button click (NOT automatically on keystroke)
     if (rawText.trim()) {
       const parsed = parseLobbyLog(rawText, lang);
       targetIds = parsed;
@@ -129,13 +128,14 @@ export const LobbyInput: React.FC<LobbyInputProps> = ({ lang, onResolvePlayers, 
         )}
 
         <div className="form-submit-bar">
-          <button
+          <AnimatedButton
             type="submit"
-            className="btn btn-primary btn-lg"
+            variant="primary"
+            size="lg"
             disabled={isLoading || (!rawText.trim() && parsedIds.length === 0)}
           >
             {isLoading ? i18n.input.loading : i18n.input.parseBtn}
-          </button>
+          </AnimatedButton>
         </div>
       </form>
     </div>
