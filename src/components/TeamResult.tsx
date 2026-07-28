@@ -32,9 +32,9 @@ export const TeamResult: React.FC<TeamResultProps> = ({
 
   if (!currentCandidate) {
     return (
-      <div className="panel-container text-center">
-        <h2>No calculated team data.</h2>
-        <AnimatedButton variant="primary" onClick={onBackToConfig}>
+      <div className="glass-card panel-container text-center p-8">
+        <h2>{i18n.result.noData}</h2>
+        <AnimatedButton variant="primary" onClick={onBackToConfig} className="mt-4">
           ← {i18n.config.backBtn}
         </AnimatedButton>
       </div>
@@ -58,9 +58,12 @@ export const TeamResult: React.FC<TeamResultProps> = ({
 
   return (
     <div className="team-result-container">
-      <div className="result-header-bar">
+      <div className="glass-card result-header-bar">
         <div className="result-info">
-          <h2 className="panel-title">{i18n.result.title}</h2>
+          <h2 className="panel-title flex-align-gap">
+            <span className="material-symbols-outlined icon-primary">auto_awesome</span>
+            {i18n.result.title}
+          </h2>
           <p className="panel-subtitle">{i18n.result.subtitle}</p>
         </div>
 
@@ -72,6 +75,7 @@ export const TeamResult: React.FC<TeamResultProps> = ({
               className={`view-btn ${viewMode === 'cards' ? 'active' : ''}`}
               onClick={() => setViewMode('cards')}
             >
+              <span className="material-symbols-outlined text-xs">grid_view</span>
               {i18n.result.viewModeCards}
             </button>
             <button
@@ -79,17 +83,21 @@ export const TeamResult: React.FC<TeamResultProps> = ({
               className={`view-btn ${viewMode === 'matchup' ? 'active' : ''}`}
               onClick={() => setViewMode('matchup')}
             >
+              <span className="material-symbols-outlined text-xs">compare_arrows</span>
               {i18n.result.viewModeMatchup}
             </button>
           </div>
 
           <AnimatedButton variant="secondary" size="sm" onClick={onBackToConfig}>
+            <span className="material-symbols-outlined text-sm">arrow_back</span>
             {i18n.result.backToConfig}
           </AnimatedButton>
           <AnimatedButton variant="secondary" size="sm" onClick={handleCopyClipboard}>
+            <span className="material-symbols-outlined text-sm">content_copy</span>
             {copySuccess ? i18n.result.copied : i18n.result.copyResult}
           </AnimatedButton>
           <AnimatedButton variant="reroll" size="md" onClick={onRebalance}>
+            <span className="material-symbols-outlined text-sm">refresh</span>
             {i18n.result.reroll}
           </AnimatedButton>
         </div>
@@ -98,19 +106,19 @@ export const TeamResult: React.FC<TeamResultProps> = ({
       {wasRecomputed && <div className="jitter-notice-banner">{i18n.result.recomputedNotice}</div>}
 
       <div className="balance-stats-bar">
-        <div className="stat-pill">
+        <div className="glass-card stat-pill">
           <span className="stat-label">{i18n.result.progress}</span>
           <span className="stat-value highlight">
             {shownCandidatesCount} / {totalCandidatesCount}
           </span>
         </div>
-        <div className="stat-pill">
+        <div className="glass-card stat-pill">
           <span className="stat-label">{i18n.result.balanceDiff}</span>
           <span className={`stat-value ${currentCandidate.balanceScore < 100 ? 'good' : 'warning'}`}>
             {currentCandidate.balanceScore} PS
           </span>
         </div>
-        <div className="stat-pill">
+        <div className="glass-card stat-pill">
           <span className="stat-label">{i18n.result.penalty}</span>
           <span className="stat-value">{currentCandidate.preferencePenalty}</span>
         </div>
@@ -119,7 +127,7 @@ export const TeamResult: React.FC<TeamResultProps> = ({
       {viewMode === 'cards' ? (
         <div className="teams-grid">
           {/* Blue Team (Team A) */}
-          <div className="team-card team-blue">
+          <div className="glass-card team-card team-blue">
             <div className="team-header">
               <div className="team-title-group">
                 <span className="team-flag blue-flag">{i18n.result.blueTeam}</span>
@@ -142,7 +150,7 @@ export const TeamResult: React.FC<TeamResultProps> = ({
           <div className="vs-badge">VS</div>
 
           {/* Red Team (Team B) */}
-          <div className="team-card team-red">
+          <div className="glass-card team-card team-red">
             <div className="team-header">
               <div className="team-title-group">
                 <span className="team-flag red-flag">{i18n.result.redTeam}</span>
@@ -164,7 +172,7 @@ export const TeamResult: React.FC<TeamResultProps> = ({
         </div>
       ) : (
         /* Line-by-Line Matchup Direct Comparison View */
-        <div className="line-matchup-container">
+        <div className="glass-card line-matchup-container">
           <div className="line-matchup-header">
             <h3>{i18n.result.lineMatchupTitle}</h3>
           </div>
@@ -230,30 +238,33 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ lang, assignment }) => {
     }
   };
 
-  const getLaneIcon = (l: string) => {
-    switch (l) {
-      case 'TOP': return '🗡️';
-      case 'JUNGLE': return '🌲';
-      case 'MID': return '🔮';
-      case 'ADC': return '🏹';
-      case 'SUPPORT': return '🛡️';
-      default: return '🎮';
-    }
-  };
+
 
   return (
     <div className="player-row">
       <div className="lane-badge-wrap">
-        <span className="lane-icon">{getLaneIcon(lane)}</span>
         <span className="lane-name">{lane}</span>
       </div>
 
       <div className="player-name-info">
-        <span className="name">{player.gameName}</span>
+        <img
+          src={player.profileIconUrl || `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${player.profileIconId || 1}.png`}
+          alt={player.gameName}
+          className="avatar-img-mini"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://ddragon.leagueoflegends.com/cdn/15.2.1/img/profileicon/1.png';
+          }}
+        />
+        <span className="name" title={`${player.gameName}#${player.tagLine}`}>
+          {player.gameName}
+        </span>
         <span className="tag">#{player.tagLine}</span>
       </div>
 
       <div className="player-right-info">
+        {player.summonerLevel && (
+          <span className="summoner-level">Lv.{player.summonerLevel}</span>
+        )}
         {getPrefBadge()}
         <TierBadge
           tier={player.tier}

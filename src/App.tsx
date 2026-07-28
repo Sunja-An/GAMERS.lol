@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBalancerState } from '@/hooks/useBalancerState';
 import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
 import { StepIndicator } from '@/components/StepIndicator';
 import { LobbyInput } from '@/components/LobbyInput';
 import { PlayerConfig } from '@/components/PlayerConfig';
@@ -14,6 +15,8 @@ export const App: React.FC = () => {
   const {
     lang,
     setLang,
+    region,
+    setRegion,
     step,
     setStep,
     players,
@@ -34,7 +37,7 @@ export const App: React.FC = () => {
   const handleResolvePlayers = async (parsedIds: ParsedRiotId[]) => {
     setIsLoading(true);
     try {
-      const resolved = await resolveRiotPlayers(parsedIds, lang);
+      const resolved = await resolveRiotPlayers(parsedIds, region);
       setPlayers(resolved);
       setStep('config');
     } catch (e) {
@@ -97,6 +100,8 @@ export const App: React.FC = () => {
           {step === 'input' && (
             <LobbyInput
               lang={lang}
+              region={region}
+              onRegionChange={setRegion}
               onResolvePlayers={handleResolvePlayers}
               isLoading={isLoading}
             />
@@ -125,6 +130,8 @@ export const App: React.FC = () => {
           )}
         </div>
       </main>
+
+      <Footer lang={lang} />
     </div>
   );
 };

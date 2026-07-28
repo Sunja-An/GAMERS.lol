@@ -20,11 +20,20 @@ export interface LanePreference {
   priority: 1 | 2; // 1 = 1st choice, 2 = 2nd choice
 }
 
+export interface SummonerDTO {
+  profileIconId: number;
+  revisionDate: number;
+  puuid: string;
+  summonerLevel: number;
+}
+
 export interface Player {
   puuid: string;
   gameName: string;
   tagLine: string;
   profileIconId: number;
+  profileIconUrl?: string;
+  summonerLevel?: number;
   tier: Tier;
   division: Division;
   leaguePoints: number;

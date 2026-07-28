@@ -1,53 +1,100 @@
-import type { Player, ParsedRiotId, Tier, Division } from '@/types/balancer';
-import type { Language } from '@/types/i18n';
+import type { Player, ParsedRiotId, Tier, Division, SummonerDTO } from '@/types/balancer';
+import type { Region } from '@/types/region';
+import { getRegionOption } from '@/types/region';
 import { calculatePowerScore } from '@/utils/powerScore';
+
+let cachedDDragonVersion = '15.2.1';
+
+// Known valid standard Riot profile icon IDs guaranteed to exist on DDragon
+const VALID_DEFAULT_ICON_IDS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
+];
+
+/**
+ * Fetch the latest Riot Data Dragon version dynamically.
+ */
+export async function getLatestDDragonVersion(): Promise<string> {
+  try {
+    const res = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
+    if (res.ok) {
+      const versions: string[] = await res.json();
+      if (versions && versions.length > 0) {
+        cachedDDragonVersion = versions[0];
+      }
+    }
+  } catch (err) {
+    console.warn('DDragon version fetch failed, using fallback:', cachedDDragonVersion, err);
+  }
+  return cachedDDragonVersion;
+}
+
+/**
+ * Helper to generate Riot Data Dragon Profile Icon CDN URL.
+ */
+export function getProfileIconUrl(profileIconId: number, version: string = cachedDDragonVersion): string {
+  const safeIconId = profileIconId > 0 ? profileIconId : 1;
+  return `https://ddragon.leagueoflegends.com/cdn/${version}/img/profileicon/${safeIconId}.png`;
+}
 
 /**
  * Direct Live Riot API Resolution:
- * 1. Account-V1 (Asia Regional Routing): GET https://asia.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine} -> puuid
- * 2. Summoner-V4 (Platform Routing kr/jp1): GET https://{region}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid} -> profileIconId
- * 3. League-V4 (Platform Routing kr/jp1): GET https://{region}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid} -> RANKED_SOLO_5x5 Tier, Division, LP
+ * 1. Account-V1 (Regional Routing e.g. /riot-asia): GET /riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine} -> puuid
+ * 2. Summoner-V4 (Platform Routing e.g. /riot-kr, /riot-jp): GET /lol/summoner/v4/summoners/by-puuid/{puuid} -> SummonerDTO
+ * 3. League-V4 (Platform Routing e.g. /riot-kr, /riot-jp): GET /lol/league/v4/entries/by-puuid/{puuid} -> RANKED_SOLO_5x5 Tier, Division, LP
  */
 async function resolveSingleLiveRiotPlayer(
   item: ParsedRiotId,
   idx: number,
   apiKey: string,
-  lang: Language = 'ko'
+  region: Region = 'kr',
+  ddragonVersion: string = cachedDDragonVersion
 ): Promise<Player | null> {
   const headers = { 'X-Riot-Token': apiKey };
-
-  // Select platform routing region based on active language (kr for Korean, jp for Japanese)
-  const platformPrefix = lang === 'ja' ? '/riot-jp' : '/riot-kr';
+  const regionOpt = getRegionOption(region);
+  const platformPrefix = regionOpt.platformRoute;
+  const regionalPrefix = regionOpt.regionalRoute;
 
   try {
-    // 1. Account-V1 (Asia Region Route)
-    const accountUrl = `/riot-asia/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(
+    // 1. Account-V1 (Regional Route)
+    const accountUrl = `${regionalPrefix}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(
       item.gameName
-    )}/${encodeURIComponent(item.tagLine)}`;
+    )}/${encodeURIComponent(item.tagLine || regionOpt.defaultTag)}`;
 
     const accRes = await fetch(accountUrl, { headers });
-    if (!accRes.ok) return null;
+    if (!accRes.ok) {
+      console.warn(`Account-V1 lookup returned HTTP ${accRes.status} for ${item.gameName}#${item.tagLine}`);
+      return null;
+    }
 
     const accData = await accRes.json();
-    const puuid = accData.puuid;
+    const puuid: string = accData.puuid;
     const resolvedName = accData.gameName || item.gameName;
-    const resolvedTag = accData.tagLine || item.tagLine;
+    const resolvedTag = accData.tagLine || item.tagLine || regionOpt.defaultTag;
 
-    // 2. Summoner-V4 & 3. League-V4 in parallel (Platform Region Route kr / jp1)
+    // 2. Summoner-V4 & 3. League-V4 in parallel
     const summonerUrl = `${platformPrefix}/lol/summoner/v4/summoners/by-puuid/${puuid}`;
     const leagueUrl = `${platformPrefix}/lol/league/v4/entries/by-puuid/${puuid}`;
 
     const [sumRes, leagueRes] = await Promise.all([
-      fetch(summonerUrl, { headers }).catch(() => null),
-      fetch(leagueUrl, { headers }).catch(() => null),
+      fetch(summonerUrl, { headers }).catch((err) => {
+        console.warn(`Summoner-V4 fetch error for ${resolvedName}#${resolvedTag}:`, err);
+        return null;
+      }),
+      fetch(leagueUrl, { headers }).catch((err) => {
+        console.warn(`League-V4 fetch error for ${resolvedName}#${resolvedTag}:`, err);
+        return null;
+      }),
     ]);
 
-    let profileIconId = 1;
+    let profileIconId = VALID_DEFAULT_ICON_IDS[idx % VALID_DEFAULT_ICON_IDS.length];
+    let summonerLevel: number | undefined = undefined;
+
     if (sumRes && sumRes.ok) {
-      const sumData = await sumRes.json();
-      if (sumData.profileIconId) {
+      const sumData: SummonerDTO = await sumRes.json();
+      if (sumData.profileIconId && sumData.profileIconId > 0) {
         profileIconId = sumData.profileIconId;
       }
+      summonerLevel = sumData.summonerLevel;
     }
 
     let tier: Tier = 'UNRANKED';
@@ -69,12 +116,15 @@ async function resolveSingleLiveRiotPlayer(
     }
 
     const powerScore = calculatePowerScore(tier, division, leaguePoints);
+    const profileIconUrl = getProfileIconUrl(profileIconId, ddragonVersion);
 
     return {
       puuid,
       gameName: resolvedName,
       tagLine: resolvedTag,
       profileIconId,
+      profileIconUrl,
+      summonerLevel,
       tier,
       division,
       leaguePoints,
@@ -93,26 +143,29 @@ async function resolveSingleLiveRiotPlayer(
 
 /**
  * Main resolution function:
- * Resolves live player data from Riot API in PARALLEL via Promise.all (< 0.5s).
- * Accepts active Language (ko / ja) to route platform requests to KR (kr.api.riotgames.com) or JP (jp1.api.riotgames.com).
+ * Resolves live player data from Riot API in PARALLEL via Promise.all.
  */
 export async function resolveRiotPlayers(
   parsedIds: ParsedRiotId[],
-  lang: Language = 'ko'
+  region: Region = 'kr'
 ): Promise<Player[]> {
+  const ddragonVersion = await getLatestDDragonVersion();
   const riotApiKey = import.meta.env.VITE_RIOT_API_KEY || '';
+  const regionOpt = getRegionOption(region);
 
   if (riotApiKey && !riotApiKey.includes('YOUR_RIOT_API_KEY')) {
     const promises = parsedIds.map(async (item, idx) => {
-      const livePlayer = await resolveSingleLiveRiotPlayer(item, idx, riotApiKey, lang);
+      const livePlayer = await resolveSingleLiveRiotPlayer(item, idx, riotApiKey, region, ddragonVersion);
       if (livePlayer) return livePlayer;
 
-      // Fallback for individual player
+      const fallbackIconId = VALID_DEFAULT_ICON_IDS[idx % VALID_DEFAULT_ICON_IDS.length];
       return {
         puuid: `puuid-${idx}-${item.gameName}`,
         gameName: item.gameName,
-        tagLine: item.tagLine || (lang === 'ja' ? 'JP1' : 'KR1'),
-        profileIconId: 1,
+        tagLine: item.tagLine || regionOpt.defaultTag,
+        profileIconId: fallbackIconId,
+        profileIconUrl: getProfileIconUrl(fallbackIconId, ddragonVersion),
+        summonerLevel: 30,
         tier: 'UNRANKED' as Tier,
         division: 'II' as Division,
         leaguePoints: 0,
@@ -129,19 +182,24 @@ export async function resolveRiotPlayers(
   }
 
   // Fallback when no API key configured
-  return parsedIds.map((item, idx) => ({
-    puuid: `puuid-${idx}-${item.gameName}`,
-    gameName: item.gameName,
-    tagLine: item.tagLine || (lang === 'ja' ? 'JP1' : 'KR1'),
-    profileIconId: 1,
-    tier: 'UNRANKED' as Tier,
-    division: 'II' as Division,
-    leaguePoints: 0,
-    powerScore: calculatePowerScore('UNRANKED', 'II', 0),
-    preferences: [
-      { lane: ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'][idx % 5] as any, priority: 1 as const },
-    ],
-    fillOk: true,
-    isUnranked: true,
-  }));
+  return parsedIds.map((item, idx) => {
+    const fallbackIconId = VALID_DEFAULT_ICON_IDS[idx % VALID_DEFAULT_ICON_IDS.length];
+    return {
+      puuid: `puuid-${idx}-${item.gameName}`,
+      gameName: item.gameName,
+      tagLine: item.tagLine || regionOpt.defaultTag,
+      profileIconId: fallbackIconId,
+      profileIconUrl: getProfileIconUrl(fallbackIconId, ddragonVersion),
+      summonerLevel: 30,
+      tier: 'UNRANKED' as Tier,
+      division: 'II' as Division,
+      leaguePoints: 0,
+      powerScore: calculatePowerScore('UNRANKED', 'II', 0),
+      preferences: [
+        { lane: ['TOP', 'JUNGLE', 'MID', 'ADC', 'SUPPORT'][idx % 5] as any, priority: 1 as const },
+      ],
+      fillOk: true,
+      isUnranked: true,
+    };
+  });
 }

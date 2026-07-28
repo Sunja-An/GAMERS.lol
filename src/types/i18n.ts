@@ -5,6 +5,8 @@ export interface Translations {
     title: string;
     subtitle: string;
     reset: string;
+    navAbout: string;
+    regionLabel: string;
   };
   steps: {
     input: string;
@@ -12,9 +14,24 @@ export interface Translations {
     result: string;
   };
   input: {
+    regionSectionTitle: string;
+    regionSectionSubtitle: string;
     title: string;
     subtitle: string;
+    extractTitle: string;
+    extractSubtitle: string;
     textareaPlaceholder: string;
+    clearBtn: string;
+    loadDemoBtn: string;
+    readClipboardBtn: string;
+    statusReady: string;
+    statusTooMany: (count: number) => string;
+    statusRequired: (remaining: number) => string;
+    distilledTitle: string;
+    emptyText: string;
+    startBalanceBtn: string;
+    helperReady: string;
+    helperRequired: string;
     parseBtn: string;
     countValid: (count: number) => string;
     countInvalid: (count: number) => string;
@@ -47,6 +64,7 @@ export interface Translations {
   result: {
     title: string;
     subtitle: string;
+    noData: string;
     backToConfig: string;
     copyResult: string;
     copied: string;
@@ -69,5 +87,11 @@ export interface Translations {
       fill: string;
       forced: string;
     };
+  };
+  footer: {
+    rights: string;
+    disclaimer: string;
+    github: string;
+    blog: string;
   };
 }

@@ -8,16 +8,16 @@ export function formatTeamSummaryText(candidate: Candidate, lang: Language = 'ko
 
   const getPrefBadge = (status: '1st' | '2nd' | 'fill' | 'forced') => {
     switch (status) {
-      case '1st': return '⭐';
-      case '2nd': return '🔹';
-      case 'fill': return '🔄';
-      case 'forced': return '⚠️';
+      case '1st': return '[1st]';
+      case '2nd': return '[2nd]';
+      case 'fill': return '[Fill]';
+      case 'forced': return '[Forced]';
     }
   };
 
   const title = lang === 'ja'
-    ? `⚔️ [GAMERS.lol 5v5 チームバランス結果] ⚔️\n`
-    : `⚔️ [GAMERS.lol 5v5 내전 팀 매칭 결과] ⚔️\n`;
+    ? `[GAMERS.lol 5v5 チームバランス結果]\n`
+    : `[GAMERS.lol 5v5 내전 팀 매칭 결과]\n`;
 
   const totalScoreLabel = lang === 'ja' ? '総戦力' : 'Total Score';
   const diffLabel = lang === 'ja' ? 'チーム戦力差' : '팀 전력차';
@@ -25,7 +25,7 @@ export function formatTeamSummaryText(candidate: Candidate, lang: Language = 'ko
 
   let text = title;
   text += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `🔵 [BLUE TEAM] ${totalScoreLabel}: ${sumPowerA}\n`;
+  text += `[BLUE TEAM] ${totalScoreLabel}: ${sumPowerA}\n`;
 
   candidate.teamA.forEach((a) => {
     const prefIcon = getPrefBadge(a.preferenceStatus);
@@ -33,7 +33,7 @@ export function formatTeamSummaryText(candidate: Candidate, lang: Language = 'ko
     text += `  • ${a.lane.padEnd(7)} | ${a.player.gameName}#${a.player.tagLine} (${rankStr}) ${prefIcon}\n`;
   });
 
-  text += `\n🔴 [RED TEAM] ${totalScoreLabel}: ${sumPowerB}\n`;
+  text += `\n[RED TEAM] ${totalScoreLabel}: ${sumPowerB}\n`;
 
   candidate.teamB.forEach((b) => {
     const prefIcon = getPrefBadge(b.preferenceStatus);
@@ -42,7 +42,7 @@ export function formatTeamSummaryText(candidate: Candidate, lang: Language = 'ko
   });
 
   text += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `📊 ${diffLabel}: ${candidate.balanceScore} | ${penaltyLabel}: ${candidate.preferencePenalty}\n`;
+  text += `${diffLabel}: ${candidate.balanceScore} | ${penaltyLabel}: ${candidate.preferencePenalty}\n`;
 
   return text;
 }

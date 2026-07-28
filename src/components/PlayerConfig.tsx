@@ -71,10 +71,14 @@ export const PlayerConfig: React.FC<PlayerConfigProps> = ({
     <div className="player-config-container">
       <div className="panel-header flex-between">
         <div>
-          <h2 className="panel-title">{i18n.config.title}</h2>
+          <h2 className="panel-title flex-align-gap">
+            <span className="material-symbols-outlined icon-primary">tune</span>
+            {i18n.config.title}
+          </h2>
           <p className="panel-subtitle">{i18n.config.subtitle}</p>
         </div>
         <AnimatedButton variant="secondary" size="sm" onClick={onBack}>
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
           {i18n.config.backBtn}
         </AnimatedButton>
       </div>
@@ -85,18 +89,30 @@ export const PlayerConfig: React.FC<PlayerConfigProps> = ({
           const pref2 = player.preferences.find((p) => p.priority === 2)?.lane;
 
           return (
-            <div key={player.puuid || idx} className="player-config-card">
+            <div key={player.puuid || idx} className="glass-card player-config-card">
               <div className="card-top">
                 <div className="player-avatar-group">
                   <div className="avatar-frame">
-                    <span className="avatar-icon">🎮</span>
+                    <img
+                      src={player.profileIconUrl || `https://ddragon.leagueoflegends.com/cdn/14.24.1/img/profileicon/${player.profileIconId || 1}.png`}
+                      alt={player.gameName}
+                      className="avatar-img"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://ddragon.leagueoflegends.com/cdn/15.2.1/img/profileicon/1.png';
+                      }}
+                    />
                   </div>
                   <div className="player-meta">
-                    <span className="player-name">
-                      {player.gameName}
+                    <div className="player-name-row">
+                      <span className="player-name-text" title={`${player.gameName}#${player.tagLine}`}>
+                        {player.gameName}
+                      </span>
                       <span className="player-tag">#{player.tagLine}</span>
-                    </span>
+                    </div>
                     <div className="rank-badge-wrap">
+                      {player.summonerLevel && (
+                        <span className="summoner-level">Lv.{player.summonerLevel}</span>
+                      )}
                       <TierBadge
                         tier={player.tier}
                         division={player.division}
@@ -109,7 +125,7 @@ export const PlayerConfig: React.FC<PlayerConfigProps> = ({
                         onClick={() => setEditingPlayerIndex(idx)}
                         title={i18n.config.editRank}
                       >
-                        ✏️
+                        <span className="material-symbols-outlined text-xs">edit</span>
                       </button>
                     </div>
                   </div>
@@ -124,14 +140,14 @@ export const PlayerConfig: React.FC<PlayerConfigProps> = ({
                 <div className="lane-row">
                   <span className="lane-row-label">{i18n.config.pref1st}</span>
                   <div className="lane-buttons">
-                    {LANES.map((lane) => (
+                    {LANES.map((l) => (
                       <button
-                        key={lane}
+                        key={l}
                         type="button"
-                        className={`lane-btn ${pref1 === lane ? 'active-1' : ''}`}
-                        onClick={() => handlePrefChange(idx, lane, 1)}
+                        className={`lane-btn ${pref1 === l ? 'active-1' : ''}`}
+                        onClick={() => handlePrefChange(idx, l, 1)}
                       >
-                        {lane}
+                        {l}
                       </button>
                     ))}
                   </div>
@@ -140,28 +156,31 @@ export const PlayerConfig: React.FC<PlayerConfigProps> = ({
                 <div className="lane-row">
                   <span className="lane-row-label">{i18n.config.pref2nd}</span>
                   <div className="lane-buttons">
-                    {LANES.map((lane) => (
+                    {LANES.map((l) => (
                       <button
-                        key={lane}
+                        key={l}
                         type="button"
-                        className={`lane-btn ${pref2 === lane ? 'active-2' : ''}`}
-                        onClick={() => handlePrefChange(idx, lane, 2)}
+                        className={`lane-btn ${pref2 === l ? 'active-2' : ''}`}
+                        onClick={() => handlePrefChange(idx, l, 2)}
                       >
-                        {lane}
+                        {l}
                       </button>
                     ))}
                   </div>
                 </div>
+              </div>
 
-                <div className="fill-toggle-row">
-                  <label className="fill-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={player.fillOk}
-                      onChange={() => handleFillToggle(idx)}
-                    />
-                    <span>{i18n.config.fillOk}</span>
-                  </label>
+              <div className="card-footer flex-between">
+                <div className="fill-toggle-wrap" onClick={() => handleFillToggle(idx)}>
+                  <button
+                    type="button"
+                    className={`toggle-switch ${player.fillOk ? 'active' : ''}`}
+                    role="switch"
+                    aria-checked={player.fillOk}
+                  >
+                    <span className="toggle-thumb" />
+                  </button>
+                  <span className="fill-toggle-label">{i18n.config.fillOk}</span>
                 </div>
               </div>
             </div>
@@ -169,13 +188,20 @@ export const PlayerConfig: React.FC<PlayerConfigProps> = ({
         })}
       </div>
 
-      <div className="form-submit-bar sticky-bar">
-        <AnimatedButton variant="primary" size="lg" onClick={onGenerateTeams}>
-          {i18n.config.startMatching}
+      <div className="sticky-bar flex-center">
+        <AnimatedButton
+          type="button"
+          variant="primary"
+          size="lg"
+          onClick={onGenerateTeams}
+          className="shadow-glow"
+        >
+          <span className="btn-label-text">{i18n.config.startMatching}</span>
+          <span className="material-symbols-outlined">auto_awesome</span>
         </AnimatedButton>
       </div>
 
-      {/* Rank Edit Modal */}
+      {/* Custom Rank Edit Modal */}
       {editingPlayerIndex !== null && (
         <RankEditModal
           lang={lang}
@@ -191,16 +217,17 @@ export const PlayerConfig: React.FC<PlayerConfigProps> = ({
 interface RankEditModalProps {
   lang: Language;
   player: Player;
-  onSave: (tier: Tier, division: Division, lp: number) => void;
+  onSave: (tier: Tier, div: Division, lp: number) => void;
   onClose: () => void;
 }
 
 const RankEditModal: React.FC<RankEditModalProps> = ({ lang, player, onSave, onClose }) => {
   const [tier, setTier] = useState<Tier>(player.tier);
-  const [division, setDivision] = useState<Division>(player.division);
-  const [lp, setLp] = useState<number>(player.leaguePoints);
+  const [division, setDivision] = useState<Division>(player.division || 'I');
+  const [lp, setLp] = useState<number>(player.leaguePoints || 0);
 
   const i18n = t(lang);
+  const isApex = ['MASTER', 'GRANDMASTER', 'CHALLENGER'].includes(tier);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,14 +235,18 @@ const RankEditModal: React.FC<RankEditModalProps> = ({ lang, player, onSave, onC
   };
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-card">
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="glass-card modal-card" onClick={(e) => e.stopPropagation()}>
         <h3>{i18n.modal.title(player.gameName)}</h3>
+
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="input-field">
             <label>{i18n.modal.tierLabel}</label>
-            <select value={tier} onChange={(e) => setTier(e.target.value as Tier)}>
-              {['UNRANKED', ...TIER_ORDER].map((t) => (
+            <select
+              value={tier}
+              onChange={(e) => setTier(e.target.value as Tier)}
+            >
+              {TIER_ORDER.map((t) => (
                 <option key={t} value={t}>
                   {t}
                 </option>
@@ -223,10 +254,13 @@ const RankEditModal: React.FC<RankEditModalProps> = ({ lang, player, onSave, onC
             </select>
           </div>
 
-          {!['UNRANKED', 'MASTER', 'GRANDMASTER', 'CHALLENGER'].includes(tier) && (
+          {!isApex && tier !== 'UNRANKED' && (
             <div className="input-field">
               <label>{i18n.modal.divisionLabel}</label>
-              <select value={division} onChange={(e) => setDivision(e.target.value as Division)}>
+              <select
+                value={division}
+                onChange={(e) => setDivision(e.target.value as Division)}
+              >
                 {Object.keys(DIVISION_OFFSET).map((d) => (
                   <option key={d} value={d}>
                     {d}
@@ -236,26 +270,26 @@ const RankEditModal: React.FC<RankEditModalProps> = ({ lang, player, onSave, onC
             </div>
           )}
 
-          {tier !== 'UNRANKED' && (
+          {(isApex || tier !== 'UNRANKED') && (
             <div className="input-field">
               <label>{i18n.modal.lpLabel}</label>
               <input
                 type="number"
-                min={0}
-                max={2000}
+                min="0"
+                max="3000"
                 value={lp}
-                onChange={(e) => setLp(Number(e.target.value))}
+                onChange={(e) => setLp(parseInt(e.target.value, 10) || 0)}
               />
             </div>
           )}
 
           <div className="modal-actions">
-            <AnimatedButton type="button" variant="secondary" onClick={onClose}>
+            <button type="button" className="btn-secondary" onClick={onClose}>
               {i18n.modal.cancel}
-            </AnimatedButton>
-            <AnimatedButton type="submit" variant="primary">
+            </button>
+            <button type="submit" className="btn-primary">
               {i18n.modal.save}
-            </AnimatedButton>
+            </button>
           </div>
         </form>
       </div>
