@@ -1,32 +1,57 @@
-# React + TypeScript + Vite
+<p align="center">
+  <img src="public/myo.jpg" alt="GAMERS.lol" width="120" />
+</p>
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+<h1 align="center">GAMERS.lol</h1>
+<p align="center">リーグ・オブ・レジェンド 5v5 内戦チーム自動バランサー</p>
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 概要
 
-## React Compiler
+ロビーチャットログを貼り付けるだけで、召喚師10名のランクとレーン希望をもとに最適な5v5チームを自動編成します。
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 主な機能
 
-## Expanding the Oxlint configuration
+- **ロビーログ解析** — チャットログから `ニックネーム#タグ` を自動抽出
+- **Riot API 連携** — ランクティア・LP・プロフィールアイコンを自動取得
+- **レーン希望入力** — 第1希望・第2希望・フィルを各プレイヤーが設定
+- **ハンガリアンアルゴリズム** — O(n³) 最小コスト二部マッチングで最適レーン配置を決定
+- **Top-K 候補生成** — 126通りの全ロスターから上位10候補を算出
+- **再抽選 (재분배)** — 加重ランダムで毎回異なる候補を提示。候補枯渇時は自動で ±3% ジッター再計算
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## 使い方
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+| ステップ | 内容 |
+|---|---|
+| 1 | ロビーチャットを貼り付けて10名を抽出 |
+| 2 | 各プレイヤーのレーン希望を設定 |
+| 3 | チーム生成 → 気に入らなければ再抽選 |
+
+## 技術スタック
+
+| 区分 | 内容 |
+|---|---|
+| フロントエンド | React 19 + TypeScript + Vite |
+| アニメーション | GSAP |
+| API | Riot Games API (Account V1 / Summoner V4 / League V4) |
+| デプロイ | Vercel |
+
+## 対応リージョン
+
+`KR` `JP` `NA` `EUW` `EUNE` `OCE`
+
+## ローカル起動
+
+```bash
+cp .env.example .env   # VITE_RIOT_API_KEY を設定
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+---
+
+<p align="center">
+  <a href="https://gamers-lol.vercel.app/ko">🇰🇷 KR</a> ·
+  <a href="https://gamers-lol.vercel.app/ja">🇯🇵 JA</a>
+</p>
