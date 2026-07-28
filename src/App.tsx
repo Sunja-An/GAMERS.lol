@@ -34,7 +34,7 @@ export const App: React.FC = () => {
   const handleResolvePlayers = async (parsedIds: ParsedRiotId[]) => {
     setIsLoading(true);
     try {
-      const resolved = await resolveRiotPlayers(parsedIds);
+      const resolved = await resolveRiotPlayers(parsedIds, lang);
       setPlayers(resolved);
       setStep('config');
     } catch (e) {
