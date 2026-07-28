@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ── Job 1: TypeScript build verification ─────────────────────────────────
   build:
     name: Build & Test Verification
     runs-on: ubuntu-latest
@@ -28,8 +29,9 @@ jobs:
       - name: Verify TypeScript & Build Project
         run: npm run build
 
+  # ── Job 2: Sync to fork (runs only on direct push to main) ───────────────
   sync:
-    name: Sync to Personal Repository for Vercel
+    name: Sync to Fork (Sunja-An/GAMERS.lol)
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -39,18 +41,39 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.PERSONAL_PAT || github.token }}
+          # Use PAT so the checkout token also has push rights for the fetch step
+          token: ${{ secrets.PERSONAL_PAT }}
 
-      - name: Push to Personal Repository (Sunja-An/GAMERS.lol)
+      - name: Validate PERSONAL_PAT secret
+        run: |
+          if [ -z "${{ secrets.PERSONAL_PAT }}" ]; then
+            echo "::error ::PERSONAL_PAT secret is not set. Go to Settings → Secrets → Actions and add PERSONAL_PAT with repo scope."
+            exit 1
+          fi
+
+      - name: Push to Fork (Sunja-An/GAMERS.lol)
         env:
           PERSONAL_PAT: ${{ secrets.PERSONAL_PAT }}
         run: |
-          if [ -n "$PERSONAL_PAT" ]; then
-            echo "Pushing to personal repository Sunja-An/GAMERS.lol..."
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git remote add personal "https://x-access-token:${PERSONAL_PAT}@github.com/Sunja-An/GAMERS.lol.git"
-            git push personal main --force
-          else
-            echo "::warning ::PERSONAL_PAT secret is missing. Please set PERSONAL_PAT in Repository Secrets to auto-sync to Sunja-An/GAMERS.lol."
-          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          FORK_URL="https://x-access-token:${PERSONAL_PAT}@github.com/Sunja-An/GAMERS.lol.git"
+          git remote add fork "$FORK_URL"
+
+          echo "Pushing main → Sunja-An/GAMERS.lol..."
+          git push fork main --force
+
+          echo "✅ Sync complete → Sunja-An/GAMERS.lol @ $(git rev-parse --short HEAD)"
+
+      - name: Job Summary
+        if: always()
+        run: |
+          echo "## 🔄 Sync Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Source | \`GMS-developer/GAMERS.lol @ main\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Target | \`Sunja-An/GAMERS.lol @ main\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`$(git rev-parse --short HEAD)\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | \`${{ github.actor }}\` |" >> $GITHUB_STEP_SUMMARY
