@@ -19,7 +19,7 @@
       ]
     },
     {
-      "source": "/(robots.txt|sitemap.xml|favicon.svg|og-image.png)",
+      "source": "/(robots.txt|sitemap.xml|favicon.svg|og-image.png|riot.txt|ko/riot.txt)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400" }
       ]
